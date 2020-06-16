@@ -1,0 +1,28 @@
+#app:
+app:
+  version: '@project.version@'
+jwt:
+  secret: fill-me-later
+  exchange-duration: PT15M
+spring:
+  jmx:
+    default-domain: com.a6raywa1cher.mucpollspring
+    unique-names: true
+    redis:
+      database:
+      host:
+      port:
+# ===============================
+# DB CONNECTION
+# ===============================
+spring.datasource.url: # REQUIRED database jdbc url
+spring.datasource.username: # REQUIRED database username
+spring.datasource.password: # REQUIRED database password
+# ===============================
+# JPA / HIBERNATE
+# ===============================
+spring.jpa.show-sql: false
+spring.jpa.hibernate.ddl-auto: update
+spring.jpa.properties.hibernate.default_schema: public
+spring.jpa.properties.hibernate.current_session_context_class: org.springframework.orm.hibernate5.SpringSessionContext
+spring.jpa.properties.hibernate.temp.use_jdbc_metadata_defaults: false
