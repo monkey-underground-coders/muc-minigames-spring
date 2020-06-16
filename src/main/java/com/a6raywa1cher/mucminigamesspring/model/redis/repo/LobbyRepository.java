@@ -17,15 +17,18 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package com.a6raywa1cher.mucminigamesspring.utils;
+package com.a6raywa1cher.mucminigamesspring.model.redis.repo;
 
+import com.a6raywa1cher.mucminigamesspring.model.redis.Lobby;
+import org.springframework.data.repository.PagingAndSortingRepository;
+import org.springframework.stereotype.Repository;
 
-import com.a6raywa1cher.mucminigamesspring.model.jpa.User;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.AuthenticationException;
+import java.util.List;
+import java.util.Optional;
 
-public interface AuthenticationResolver {
-	User getUser() throws AuthenticationException;
+@Repository
+public interface LobbyRepository extends PagingAndSortingRepository<Lobby, String> {
+	Optional<Lobby> findByHostUID(long hostUID);
 
-	User getUser(Authentication authentication) throws AuthenticationException;
+	List<Lobby> findAllByHostSimpSessionId(String hostSimpSessionId);
 }

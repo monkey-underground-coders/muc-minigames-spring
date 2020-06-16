@@ -17,15 +17,23 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package com.a6raywa1cher.mucminigamesspring.utils;
+package com.a6raywa1cher.mucminigamesspring.service;
 
+import com.a6raywa1cher.mucminigamesspring.model.redis.Lobby;
 
-import com.a6raywa1cher.mucminigamesspring.model.jpa.User;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.AuthenticationException;
+import java.util.List;
+import java.util.Optional;
 
-public interface AuthenticationResolver {
-	User getUser() throws AuthenticationException;
+public interface LobbyService {
+	Lobby create(long hostUID, String hostSimpSessionId, boolean visible);
 
-	User getUser(Authentication authentication) throws AuthenticationException;
+	Lobby create(long hostUID, String hostSimpSessionId, boolean visible, String password);
+
+	Optional<Lobby> getById(String id);
+
+	Optional<Lobby> getByHostUID(long hostUID);
+
+	void closeLobby(String lobbyId);
+
+	List<Lobby> closeAllByHostSimpSessionId(String hostSimpSessionId);
 }

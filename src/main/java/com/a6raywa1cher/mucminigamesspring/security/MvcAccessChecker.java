@@ -19,20 +19,30 @@
 
 package com.a6raywa1cher.mucminigamesspring.security;
 
+import com.a6raywa1cher.mucminigamesspring.model.jpa.User;
+import com.a6raywa1cher.mucminigamesspring.model.redis.Lobby;
+import com.a6raywa1cher.mucminigamesspring.service.LobbyService;
+import com.a6raywa1cher.mucminigamesspring.utils.AuthenticationResolver;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Component;
 
+import java.util.Optional;
+
 @Component
 public class MvcAccessChecker {
-	public boolean checkPid(Authentication authentication, Long pid) {
-//		PollGrantedAuthority toFind = new PollGrantedAuthority(pid);
-//		return authentication.getAuthorities().contains(toFind);
-		return false;
+	private final LobbyService lobbyService;
+	private final AuthenticationResolver authenticationResolver;
+
+	@Autowired
+	public MvcAccessChecker(LobbyService lobbyService, AuthenticationResolver authenticationResolver) {
+		this.lobbyService = lobbyService;
+		this.authenticationResolver = authenticationResolver;
 	}
 
-	public boolean checkTid(Authentication authentication, Long tid) {
-//		TagGrantedAuthority toFind = new TagGrantedAuthority(tid);
-//		return authentication.getAuthorities().contains(toFind);
-		return false;
+	public boolean checkLid(Authentication authentication, String lid) {
+		User user = authenticationResolver.getUser(authentication);
+		Optional<Lobby> byId = lobbyService.getById(lid);
+		return byId.map(lobby -> lobby.getPlayers().contains(user.getId())).orElse(false);
 	}
 }

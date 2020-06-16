@@ -17,15 +17,33 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package com.a6raywa1cher.mucminigamesspring.utils;
+package com.a6raywa1cher.mucminigamesspring.model.redis;
 
+import lombok.Data;
+import org.springframework.data.annotation.Id;
+import org.springframework.data.redis.core.RedisHash;
+import org.springframework.data.redis.core.index.Indexed;
 
-import com.a6raywa1cher.mucminigamesspring.model.jpa.User;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.AuthenticationException;
+import java.util.List;
 
-public interface AuthenticationResolver {
-	User getUser() throws AuthenticationException;
+@RedisHash("Lobby")
+@Data
+public class Lobby {
+	@Id
+	private String id;
 
-	User getUser(Authentication authentication) throws AuthenticationException;
+	@Indexed
+	private long hostUID;
+
+	private boolean visible;
+
+	private String password;
+
+	@Indexed
+	private List<Long> players;
+
+	private LobbyStatus lobbyStatus;
+
+	@Indexed
+	private String hostSimpSessionId;
 }

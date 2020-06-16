@@ -17,15 +17,11 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package com.a6raywa1cher.mucminigamesspring.utils;
+package com.a6raywa1cher.mucminigamesspring.stomp.exceptions;
 
+import org.springframework.http.HttpStatus;
+import org.springframework.web.bind.annotation.ResponseStatus;
 
-import com.a6raywa1cher.mucminigamesspring.model.jpa.User;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.AuthenticationException;
-
-public interface AuthenticationResolver {
-	User getUser() throws AuthenticationException;
-
-	User getUser(Authentication authentication) throws AuthenticationException;
+@ResponseStatus(code = HttpStatus.FORBIDDEN, reason = "Forbidden")
+public class ForbiddenException extends RuntimeException {
 }

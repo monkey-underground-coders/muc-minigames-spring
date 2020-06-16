@@ -33,7 +33,7 @@ import org.springframework.web.socket.server.support.HttpSessionHandshakeInterce
 @EnableWebSocketMessageBroker
 public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
 	private TaskScheduler messageBrokerTaskScheduler;
-	private AppConfigProperties properties;
+	private final AppConfigProperties properties;
 
 	@Autowired
 	public WebSocketConfig(AppConfigProperties properties) {
@@ -55,13 +55,13 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
 	@Override
 	public void configureMessageBroker(MessageBrokerRegistry registry) {
 		registry.setApplicationDestinationPrefixes("/app");
-		registry.enableSimpleBroker("/topic")
+		registry.enableSimpleBroker("/topic", "/queue")
 				.setHeartbeatValue(new long[]{10000, 20000})
 				.setTaskScheduler(this.messageBrokerTaskScheduler);
 	}
 
 	@Override
 	public void configureWebSocketTransport(WebSocketTransportRegistration registry) {
-		registry.setMessageSizeLimit(128 * 1024);
+		registry.setMessageSizeLimit(1024);
 	}
 }

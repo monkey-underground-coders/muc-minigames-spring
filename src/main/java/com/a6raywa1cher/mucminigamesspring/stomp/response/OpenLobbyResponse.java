@@ -17,15 +17,13 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package com.a6raywa1cher.mucminigamesspring.utils;
+package com.a6raywa1cher.mucminigamesspring.stomp.response;
 
+import lombok.AllArgsConstructor;
+import lombok.Data;
 
-import com.a6raywa1cher.mucminigamesspring.model.jpa.User;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.AuthenticationException;
-
-public interface AuthenticationResolver {
-	User getUser() throws AuthenticationException;
-
-	User getUser(Authentication authentication) throws AuthenticationException;
+@Data
+@AllArgsConstructor
+public class OpenLobbyResponse {
+	private String lid;
 }

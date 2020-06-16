@@ -29,7 +29,10 @@ public class WebSocketAuthorizationSecurityConfig extends AbstractSecurityWebSoc
 	@Override
 	protected void configureInbound(final MessageSecurityMetadataSourceRegistry messages) {
 		// You can customize your authorization mapping here.
-		messages.anyMessage().permitAll();
+		//noinspection SpringElInspection
+		messages
+				.simpSubscribeDestMatchers("/lobby/{lid}").access("@mvcAccessChecker.checkLid(authentication, #lid)")
+				.anyMessage().permitAll();
 	}
 
 	// TODO: For test purpose (and simplicity) i disabled CSRF, but you should re-enable this and provide a CRSF endpoint.

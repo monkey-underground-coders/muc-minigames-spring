@@ -23,8 +23,10 @@ import com.a6raywa1cher.mucminigamesspring.model.VendorId;
 import com.a6raywa1cher.mucminigamesspring.model.jpa.User;
 import com.a6raywa1cher.mucminigamesspring.security.authentication.CustomAuthentication;
 import com.a6raywa1cher.mucminigamesspring.service.UserService;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken;
 import org.springframework.stereotype.Component;
@@ -38,8 +40,16 @@ public class AuthenticationResolverImpl implements AuthenticationResolver {
 	}
 
 	@Override
-	public User getUser() {
+	public User getUser() throws AuthenticationException {
 		Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+		return getUser(authentication);
+	}
+
+	@Override
+	public User getUser(Authentication authentication) throws AuthenticationException {
+		if (authentication == null) {
+			throw new BadCredentialsException("No credentials presented");
+		}
 		if (authentication instanceof CustomAuthentication) {
 			CustomAuthentication customAuthentication = (CustomAuthentication) authentication;
 			return userService.getById(customAuthentication.getPrincipal()).orElseThrow();

@@ -27,7 +27,6 @@ import com.fasterxml.jackson.annotation.JsonView;
 import lombok.Data;
 
 import javax.persistence.*;
-import java.time.LocalDateTime;
 import java.time.ZonedDateTime;
 
 @Entity
@@ -65,6 +64,10 @@ public class User {
 	@Column
 	@JsonView(Views.Internal.class)
 	private boolean emailVerified;
+
+	@Column
+	@JsonView(Views.Public.class)
+	private boolean locked;
 
 	@Column
 	@JsonView(Views.Public.class)

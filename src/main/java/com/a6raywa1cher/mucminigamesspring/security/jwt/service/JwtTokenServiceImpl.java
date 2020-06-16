@@ -37,7 +37,7 @@ import java.util.Optional;
 
 @Service
 public class JwtTokenServiceImpl implements JwtTokenService {
-	private final static String ISSUER_NAME = "muchelp-spring";
+	private final static String ISSUER_NAME = "muc-minigames-spring";
 	private final static String VENDOR_ID_CLAIM = "vid";
 	private final static String VENDOR_SUB_CLAIM = "vsub";
 	@Value("${jwt.secret}")
