@@ -17,18 +17,11 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package com.a6raywa1cher.mucminigamesspring.model.redis.repo;
+package com.a6raywa1cher.mucminigamesspring.stomp.exceptions;
 
-import com.a6raywa1cher.mucminigamesspring.model.redis.Lobby;
-import org.springframework.data.repository.PagingAndSortingRepository;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.bind.annotation.ResponseStatus;
 
-import java.util.List;
-import java.util.Optional;
-
-public interface LobbyRepository extends PagingAndSortingRepository<Lobby, String> {
-	Optional<Lobby> findByHostUID(long hostUID);
-
-	List<Lobby> findAllByPlayerContaining(Long playerId, String playerSimpSessionId);
-
-	List<Lobby> findAllByPlayerContaining(Long playerId);
+@ResponseStatus(code = HttpStatus.NOT_FOUND, reason = "Entity not found")
+public class NotFoundException extends RuntimeException {
 }

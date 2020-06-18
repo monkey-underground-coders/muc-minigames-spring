@@ -43,6 +43,6 @@ public class MvcAccessChecker {
 	public boolean checkLid(Authentication authentication, String lid) {
 		User user = authenticationResolver.getUser(authentication);
 		Optional<Lobby> byId = lobbyService.getById(lid);
-		return byId.map(lobby -> lobby.getPlayers().contains(user.getId())).orElse(false);
+		return byId.map(lobby -> lobby.getPlayers().stream().anyMatch(p -> p.getFirst().equals(user.getId()))).orElse(false);
 	}
 }

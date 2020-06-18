@@ -21,14 +21,18 @@ package com.a6raywa1cher.mucminigamesspring.model.redis.repo;
 
 import com.a6raywa1cher.mucminigamesspring.model.redis.Lobby;
 import org.springframework.data.repository.PagingAndSortingRepository;
+import org.springframework.stereotype.Repository;
 
 import java.util.List;
 import java.util.Optional;
 
-public interface LobbyRepository extends PagingAndSortingRepository<Lobby, String> {
+@Repository
+public interface InnerLobbyRepository extends PagingAndSortingRepository<Lobby, String> {
 	Optional<Lobby> findByHostUID(long hostUID);
 
-	List<Lobby> findAllByPlayerContaining(Long playerId, String playerSimpSessionId);
+	List<Lobby> findAllByPlayer1IdAndPlayer1SimpSessionId(Long player1Id, String player1SimpSessionId);
 
-	List<Lobby> findAllByPlayerContaining(Long playerId);
+	List<Lobby> findAllByPlayer2IdAndPlayer2SimpSessionId(Long player2Id, String player2SimpSessionId);
+
+	List<Lobby> findAllByPlayer1IdOrPlayer2Id(Long player1Id, Long player2Id);
 }

@@ -20,5 +20,5 @@
 package com.a6raywa1cher.mucminigamesspring.model.redis;
 
 public enum LobbyStatus {
-	IN_LOBBY, GAME_IN_PROGRESS
+	IN_LOBBY, GAME_IN_PROGRESS, CLOSED
 }

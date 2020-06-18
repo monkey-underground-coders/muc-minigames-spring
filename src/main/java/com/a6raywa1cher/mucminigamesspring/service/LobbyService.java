@@ -19,6 +19,7 @@
 
 package com.a6raywa1cher.mucminigamesspring.service;
 
+import com.a6raywa1cher.mucminigamesspring.model.jpa.User;
 import com.a6raywa1cher.mucminigamesspring.model.redis.Lobby;
 
 import java.util.List;
@@ -33,7 +34,17 @@ public interface LobbyService {
 
 	Optional<Lobby> getByHostUID(long hostUID);
 
+	Lobby appendUser(Lobby lobby, User user, String simpSessionId);
+
 	void closeLobby(String lobbyId);
 
-	List<Lobby> closeAllByHostSimpSessionId(String hostSimpSessionId);
+	Lobby driftHostTo(Lobby lobby, long userId);
+
+	Lobby disconnectFromLobby(Lobby lobby, long userId);
+
+	Lobby disconnectFromLobby(Lobby lobby, String simpSessionId);
+
+	List<Lobby> disconnectFromLobbies(long userId, String simpSessionId);
+
+	boolean isConnectedToAnyLobby(long userId);
 }

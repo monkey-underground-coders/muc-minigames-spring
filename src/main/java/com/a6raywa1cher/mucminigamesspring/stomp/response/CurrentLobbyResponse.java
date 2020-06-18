@@ -22,9 +22,11 @@ package com.a6raywa1cher.mucminigamesspring.stomp.response;
 import com.a6raywa1cher.mucminigamesspring.model.redis.Lobby;
 import com.a6raywa1cher.mucminigamesspring.model.redis.LobbyStatus;
 import lombok.Data;
+import org.springframework.data.util.Pair;
 import org.springframework.util.StringUtils;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Data
 public class CurrentLobbyResponse {
@@ -40,15 +42,14 @@ public class CurrentLobbyResponse {
 
 	private LobbyStatus lobbyStatus;
 
-	private String hostSimpSessionId;
-
 	public CurrentLobbyResponse(Lobby lobby) {
 		this.id = lobby.getId();
 		this.hostUID = lobby.getHostUID();
 		this.visible = lobby.isVisible();
 		this.passwordProtected = StringUtils.hasLength(lobby.getPassword());
-		this.players = lobby.getPlayers();
+		this.players = lobby.getPlayers().stream()
+				.map(Pair::getFirst)
+				.collect(Collectors.toList());
 		this.lobbyStatus = lobby.getLobbyStatus();
-		this.hostSimpSessionId = lobby.getHostSimpSessionId();
 	}
 }

@@ -19,13 +19,16 @@
 
 package com.a6raywa1cher.mucminigamesspring.service.impl;
 
+import com.a6raywa1cher.mucminigamesspring.model.jpa.User;
 import com.a6raywa1cher.mucminigamesspring.model.redis.Lobby;
 import com.a6raywa1cher.mucminigamesspring.model.redis.LobbyStatus;
 import com.a6raywa1cher.mucminigamesspring.model.redis.repo.LobbyRepository;
 import com.a6raywa1cher.mucminigamesspring.service.LobbyService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.util.Pair;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -39,6 +42,20 @@ public class LobbyServiceImpl implements LobbyService {
 		this.lobbyRepository = lobbyRepository;
 	}
 
+	private Lobby $appendUser(Lobby lobby, long userId, String simpSessionId) {
+		List<Pair<Long, String>> pairs = new ArrayList<>(lobby.getPlayers());
+		pairs.add(Pair.of(userId, simpSessionId));
+		lobby.setPlayers(pairs);
+		return lobbyRepository.save(lobby);
+	}
+
+	private Lobby $removeUser(Lobby lobby, long userId, String simpSessionId) {
+		List<Pair<Long, String>> pairs = new ArrayList<>(lobby.getPlayers());
+		pairs.remove(Pair.of(userId, simpSessionId));
+		lobby.setPlayers(pairs);
+		return lobbyRepository.save(lobby);
+	}
+
 	@Override
 	public Lobby create(long hostUID, String hostSimpSessionId, boolean visible) {
 		return create(hostUID, hostSimpSessionId, visible, "");
@@ -50,9 +67,8 @@ public class LobbyServiceImpl implements LobbyService {
 		lobby.setHostUID(hostUID);
 		lobby.setVisible(visible);
 		lobby.setPassword(password);
-		lobby.setPlayers(Collections.singletonList(hostUID));
+		lobby.setPlayers(Collections.singletonList(Pair.of(hostUID, hostSimpSessionId)));
 		lobby.setLobbyStatus(LobbyStatus.IN_LOBBY);
-		lobby.setHostSimpSessionId(hostSimpSessionId);
 		return lobbyRepository.save(lobby);
 	}
 
@@ -67,14 +83,69 @@ public class LobbyServiceImpl implements LobbyService {
 	}
 
 	@Override
+	public Lobby appendUser(Lobby lobby, User user, String simpSessionId) {
+		return $appendUser(lobby, user.getId(), simpSessionId);
+	}
+
+	@Override
 	public void closeLobby(String lobbyId) {
 		lobbyRepository.deleteById(lobbyId);
 	}
 
 	@Override
-	public List<Lobby> closeAllByHostSimpSessionId(String hostSimpSessionId) {
-		List<Lobby> lobbies = lobbyRepository.findAllByHostSimpSessionId(hostSimpSessionId);
-		lobbyRepository.deleteAll(lobbies);
+	public Lobby driftHostTo(Lobby lobby, long userId) {
+		if (lobby.getPlayers().stream().anyMatch(p -> p.getFirst().equals(userId))) {
+			lobby.setHostUID(userId);
+			return lobbyRepository.save(lobby);
+		} else {
+			throw new IllegalArgumentException("Transfer host to a non-related user denied");
+		}
+	}
+
+	private Lobby disconnectFromLobby(Lobby lobby, long userId, String simpSessionId) {
+		if (userId == lobby.getHostUID()) {
+			// try to find successor, if any player present
+			Optional<Pair<Long, String>> otherPlayer = lobby.getPlayers().stream()
+					.filter(p -> !p.equals(Pair.of(userId, simpSessionId)))
+					.findAny();
+			if (otherPlayer.isPresent()) {
+				Lobby lobby1 = driftHostTo(lobby, otherPlayer.get().getFirst());
+				return $removeUser(lobby1, userId, simpSessionId);
+			} else {
+				closeLobby(lobby.getId());
+				lobby.setLobbyStatus(LobbyStatus.CLOSED);
+				return lobby;
+			}
+		} else {
+			return $removeUser(lobby, userId, simpSessionId);
+		}
+	}
+
+	@Override
+	public Lobby disconnectFromLobby(Lobby lobby, String simpSessionId) {
+		Pair<Long, String> player = lobby.getPlayers().stream()
+				.filter(p -> p.getSecond().equals(simpSessionId))
+				.findAny().orElseThrow(() -> new IllegalArgumentException("Can't disconnect from non-related lobby"));
+		return disconnectFromLobby(lobby, player.getFirst(), player.getSecond());
+	}
+
+	@Override
+	public List<Lobby> disconnectFromLobbies(long userId, String simpSessionId) {
+		List<Lobby> lobbies = lobbyRepository.findAllByPlayerContaining(userId, simpSessionId);
+		lobbies.forEach(l -> disconnectFromLobby(l, userId, simpSessionId));
 		return lobbies;
+	}
+
+	@Override
+	public boolean isConnectedToAnyLobby(long userId) {
+		return lobbyRepository.findAllByPlayerContaining(userId).size() > 0;
+	}
+
+	@Override
+	public Lobby disconnectFromLobby(Lobby lobby, long userId) {
+		Pair<Long, String> player = lobby.getPlayers().stream()
+				.filter(p -> p.getFirst().equals(userId))
+				.findAny().orElseThrow(() -> new IllegalArgumentException("Can't disconnect from non-related lobby"));
+		return disconnectFromLobby(lobby, player.getFirst(), player.getSecond());
 	}
 }

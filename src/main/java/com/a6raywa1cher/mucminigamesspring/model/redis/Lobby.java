@@ -23,7 +23,10 @@ import lombok.Data;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.redis.core.RedisHash;
 import org.springframework.data.redis.core.index.Indexed;
+import org.springframework.data.util.Pair;
+import org.springframework.util.StringUtils;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @RedisHash("Lobby")
@@ -40,10 +43,50 @@ public class Lobby {
 	private String password;
 
 	@Indexed
-	private List<Long> players;
+	private Long player1Id;
+
+	@Indexed
+	private String player1SimpSessionId;
+
+	@Indexed
+	private Long player2Id;
+
+	@Indexed
+	private String player2SimpSessionId;
 
 	private LobbyStatus lobbyStatus;
 
-	@Indexed
-	private String hostSimpSessionId;
+	public boolean isPasswordEnforced() {
+		return StringUtils.hasLength(password);
+	}
+
+	public List<Pair<Long, String>> getPlayers() {
+		List<Pair<Long, String>> list = new ArrayList<>();
+		if (player1Id != null) {
+			list.add(Pair.of(player1Id, player1SimpSessionId));
+		}
+		if (player2Id != null) {
+			list.add(Pair.of(player2Id, player2SimpSessionId));
+		}
+		return list;
+	}
+
+	public void setPlayers(List<Pair<Long, String>> players) {
+		if (players.size() > 2) throw new IllegalArgumentException("Players must be less than 2");
+
+		if (players.size() >= 1) {
+			player1Id = players.get(0).getFirst();
+			player1SimpSessionId = players.get(0).getSecond();
+		} else {
+			player1Id = null;
+			player1SimpSessionId = null;
+		}
+		if (players.size() >= 2) {
+			player2Id = players.get(1).getFirst();
+			player2SimpSessionId = players.get(1).getSecond();
+		} else {
+			player2Id = null;
+			player2SimpSessionId = null;
+		}
+	}
 }

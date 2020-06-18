@@ -23,14 +23,18 @@ import com.a6raywa1cher.mucminigamesspring.model.jpa.User;
 import com.a6raywa1cher.mucminigamesspring.model.redis.Lobby;
 import com.a6raywa1cher.mucminigamesspring.service.LobbyService;
 import com.a6raywa1cher.mucminigamesspring.service.UserService;
+import com.a6raywa1cher.mucminigamesspring.stomp.exceptions.DoubleLobbyEntryException;
+import com.a6raywa1cher.mucminigamesspring.stomp.exceptions.ForbiddenException;
+import com.a6raywa1cher.mucminigamesspring.stomp.exceptions.NotFoundException;
+import com.a6raywa1cher.mucminigamesspring.stomp.request.LoginToLobbyRequest;
 import com.a6raywa1cher.mucminigamesspring.stomp.request.OpenLobbyRequest;
+import com.a6raywa1cher.mucminigamesspring.stomp.response.CurrentLobbyResponse;
 import com.a6raywa1cher.mucminigamesspring.stomp.response.OpenLobbyResponse;
 import com.a6raywa1cher.mucminigamesspring.utils.AuthenticationResolver;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.messaging.handler.annotation.Header;
-import org.springframework.messaging.handler.annotation.MessageMapping;
-import org.springframework.messaging.handler.annotation.Payload;
+import org.springframework.messaging.handler.annotation.*;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.messaging.simp.annotation.SendToUser;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
@@ -46,12 +50,14 @@ public class LobbyController {
 	private final UserService userService;
 	private final LobbyService lobbyService;
 	private final AuthenticationResolver authenticationResolver;
+	private final SimpMessagingTemplate template;
 
 	@Autowired
-	public LobbyController(UserService userService, LobbyService lobbyService, AuthenticationResolver authenticationResolver) {
+	public LobbyController(UserService userService, LobbyService lobbyService, AuthenticationResolver authenticationResolver, SimpMessagingTemplate template) {
 		this.userService = userService;
 		this.lobbyService = lobbyService;
 		this.authenticationResolver = authenticationResolver;
+		this.template = template;
 	}
 
 	@MessageMapping("/lobby_control/open_lobby")
@@ -67,5 +73,35 @@ public class LobbyController {
 			lobby = lobbyService.create(user.getId(), sessionId, request.isVisible(), request.getPassword());
 		}
 		return new OpenLobbyResponse(lobby.getId());
+	}
+
+	@MessageMapping("/lobby/{lid}/login")
+	@SendToUser("/queue/reply")
+	@SendTo("/lobby/{lid}")
+	@Transactional
+	public CurrentLobbyResponse loginToLobby(@DestinationVariable("lid") String lid,
+											 @Payload @Valid LoginToLobbyRequest request,
+											 @Header("simpSessionId") String sessionId,
+											 Principal principal) {
+		User user = authenticationResolver.getUser((Authentication) principal);
+		Lobby lobby = lobbyService.getById(lid).orElseThrow(NotFoundException::new);
+		if (lobby.isPasswordEnforced() && !lobby.getPassword().equals(request.getPassword())) {
+			throw new ForbiddenException();
+		}
+		if (lobbyService.isConnectedToAnyLobby(user.getId())) {
+			throw new DoubleLobbyEntryException();
+		}
+		Lobby out = lobbyService.appendUser(lobby, user, sessionId);
+		return new CurrentLobbyResponse(out);
+	}
+
+	@MessageMapping("/lobby/{lid}/info")
+	@SendTo("/lobby/{lid}")
+	@Transactional
+	public CurrentLobbyResponse getLobbyInfo(@DestinationVariable("lid") String lid,
+											 Principal principal) {
+		User user = authenticationResolver.getUser((Authentication) principal);
+		Lobby lobby = lobbyService.getById(lid).orElseThrow(NotFoundException::new);
+		return new CurrentLobbyResponse(lobby);
 	}
 }

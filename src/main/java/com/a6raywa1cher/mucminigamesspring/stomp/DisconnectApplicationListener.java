@@ -19,14 +19,17 @@
 
 package com.a6raywa1cher.mucminigamesspring.stomp;
 
+import com.a6raywa1cher.mucminigamesspring.model.jpa.User;
 import com.a6raywa1cher.mucminigamesspring.model.redis.Lobby;
 import com.a6raywa1cher.mucminigamesspring.service.LobbyService;
 import com.a6raywa1cher.mucminigamesspring.stomp.response.CurrentLobbyResponse;
+import com.a6raywa1cher.mucminigamesspring.utils.AuthenticationResolver;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationListener;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
+import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Component;
 import org.springframework.web.socket.messaging.SessionDisconnectEvent;
 
@@ -42,11 +45,13 @@ public class DisconnectApplicationListener implements ApplicationListener<Sessio
 	private final Map<String, Boolean> handling;
 	private final LobbyService lobbyService;
 	private final SimpMessagingTemplate template;
+	private final AuthenticationResolver resolver;
 
 	@Autowired
-	public DisconnectApplicationListener(LobbyService lobbyService, SimpMessagingTemplate template) {
+	public DisconnectApplicationListener(LobbyService lobbyService, SimpMessagingTemplate template, AuthenticationResolver resolver) {
 		this.lobbyService = lobbyService;
 		this.template = template;
+		this.resolver = resolver;
 		this.handling = new ConcurrentHashMap<>();
 	}
 
@@ -58,19 +63,11 @@ public class DisconnectApplicationListener implements ApplicationListener<Sessio
 		return true;
 	}
 
-	@Override
-	@Transactional
-	public void onApplicationEvent(SessionDisconnectEvent event) {
-		String name = (event.getUser() == null ? "unknown" : event.getUser().getName());
-		String simpSessionId = event.getSessionId();
-		log.debug("User disconnected, username:{}, simpSessionId:{}", name, simpSessionId);
-		if (!check(event)) {
-			return;
-		}
-		assert event.getUser() != null;
-		log.info("Starting closing lobbies for username:{}, simpSessionId:{}", name, simpSessionId);
+	private void disconnectFromLobbies(User user, String simpSessionId) {
+		String name = user.getName();
+		log.info("Starting disconnecting from lobbies for username:{}, simpSessionId:{}", name, simpSessionId);
 		try {
-			List<Lobby> lobbies = lobbyService.closeAllByHostSimpSessionId(simpSessionId);
+			List<Lobby> lobbies = lobbyService.disconnectFromLobbies(user.getId(), simpSessionId);
 			log.info("simpSessionId:{} connected with these lobbies:{}", simpSessionId, lobbies.stream()
 					.map(Lobby::getId)
 					.collect(Collectors.joining(",")));
@@ -78,8 +75,27 @@ public class DisconnectApplicationListener implements ApplicationListener<Sessio
 				template.convertAndSend(String.format("/lobby/%s", lobby.getId()),
 						new CurrentLobbyResponse(lobby));
 			}
+		} catch (Exception e) {
+			log.error("Disconnect processing error", e);
 		} finally {
 			log.info("Completed closing lobbies for username " + name);
+		}
+	}
+
+	@Override
+	@Transactional
+	public void onApplicationEvent(SessionDisconnectEvent event) {
+		String simpSessionId = event.getSessionId();
+		if (!check(event)) {
+			return;
+		}
+		assert event.getUser() != null;
+		User user = resolver.getUser((Authentication) event.getUser());
+		String name = user.getName();
+		log.debug("User disconnected, username:{}, simpSessionId:{}", event.getUser().getName(), simpSessionId);
+		try {
+			disconnectFromLobbies(user, simpSessionId);
+		} finally {
 			handling.remove(name);
 		}
 	}

@@ -17,18 +17,25 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package com.a6raywa1cher.mucminigamesspring.model.redis.repo;
+package com.a6raywa1cher.mucminigamesspring.stomp;
 
-import com.a6raywa1cher.mucminigamesspring.model.redis.Lobby;
-import org.springframework.data.repository.PagingAndSortingRepository;
+import com.a6raywa1cher.mucminigamesspring.model.redis.repo.LobbyRepository;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.context.event.ApplicationStartedEvent;
+import org.springframework.context.ApplicationListener;
+import org.springframework.stereotype.Component;
 
-import java.util.List;
-import java.util.Optional;
+@Component
+public class StartupLobbyCleanerApplicationListener implements ApplicationListener<ApplicationStartedEvent> {
+	private final LobbyRepository lobbyRepository;
 
-public interface LobbyRepository extends PagingAndSortingRepository<Lobby, String> {
-	Optional<Lobby> findByHostUID(long hostUID);
+	@Autowired
+	public StartupLobbyCleanerApplicationListener(LobbyRepository lobbyRepository) {
+		this.lobbyRepository = lobbyRepository;
+	}
 
-	List<Lobby> findAllByPlayerContaining(Long playerId, String playerSimpSessionId);
-
-	List<Lobby> findAllByPlayerContaining(Long playerId);
+	@Override
+	public void onApplicationEvent(ApplicationStartedEvent event) {
+		lobbyRepository.deleteAll();
+	}
 }

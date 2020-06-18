@@ -17,18 +17,14 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package com.a6raywa1cher.mucminigamesspring.model.redis.repo;
+package com.a6raywa1cher.mucminigamesspring.stomp.request;
 
-import com.a6raywa1cher.mucminigamesspring.model.redis.Lobby;
-import org.springframework.data.repository.PagingAndSortingRepository;
+import lombok.Data;
 
-import java.util.List;
-import java.util.Optional;
+import javax.validation.constraints.Size;
 
-public interface LobbyRepository extends PagingAndSortingRepository<Lobby, String> {
-	Optional<Lobby> findByHostUID(long hostUID);
-
-	List<Lobby> findAllByPlayerContaining(Long playerId, String playerSimpSessionId);
-
-	List<Lobby> findAllByPlayerContaining(Long playerId);
+@Data
+public class LoginToLobbyRequest {
+	@Size(max = 255)
+	private String password;
 }

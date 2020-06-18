@@ -19,15 +19,11 @@
 
 package com.a6raywa1cher.mucminigamesspring.stomp.request;
 
-import lombok.AllArgsConstructor;
 import lombok.Data;
-import lombok.NoArgsConstructor;
 
 import javax.validation.constraints.Size;
 
 @Data
-@NoArgsConstructor
-@AllArgsConstructor
 public class OpenLobbyRequest {
 	private boolean visible = true;
 	@Size(max = 255)
